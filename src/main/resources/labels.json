@@ -1,0 +1,48 @@
+{
+  "name": "FRIEND-SYSTEM",
+  "messages": {
+    "server": {
+      "onEnable": "§bFRIEND-SYSTEM §7has successfully been §aENABLED§7.",
+      "onDisable": "§bFRIEND-SYSTEM §7has successfully been §cDISABLED§7."
+    },
+    "noPermission": "§c§l! §7You do not have permission to perform this command.",
+    "noPlayer": "§c§l! §7You must be a player to perform this command.",
+
+    "friend": {
+      "online": "§a§l+ §e%player% §7is now online.",
+      "offline": "§c§l- §e%player% §7went offline.",
+      "joinMessage": "§7You have §b%online% §7friends online.",
+
+      "requestSent": "§a§l! §7Friend request sent to §e%player%§7.",
+      "requestReceived": "§e%player% §7sent you a friend request.",
+      "requestAccepted": "§a§l! §7You are now friends with §e%player%§7.",
+      "requestDenied": "§c§l! §7You denied §e%player%§7's friend request.",
+
+      "alreadyFriends": "§c§l! §7You are already friends with §e%player%§7.",
+      "alreadyRequested": "§c§l! §7You already sent a request to §e%player%§7.",
+      "requestNotFound": "§c§l! §7No request from §e%player%§7.",
+
+      "notFriends": "§c§l! §7You are not friends with §e%player%§7.",
+      "self": "§c§l! §7You can't do that to yourself.",
+      "playerNotFound": "§c§l! §7Player not found.",
+
+      "blocked": "§a§l! §7You blocked §e%player%§7.",
+      "unblocked": "§a§l! §7You unblocked §e%player%§7.",
+      "alreadyBlocked": "§c§l! §7You already blocked §e%player%§7.",
+      "notBlocked": "§c§l! §7You did not block §e%player%§7.",
+      "blockedByOther": "§c§l! §7You are blocked by §e%player%§7.",
+      "cannotRequestBlocked": "§c§l! §7You cannot send this player a friend request."
+    }
+  },
+  "commands": {
+    "friends": {
+      "usage": "§c§l! §7Usage: §b/friend add §e<player> §7| §bremove §e<player> §7| §bblock §e<player> §7| §bunblock §e<player> §7| §baccept §e<player> §7| §bdeny §e<player> §7| §blist",
+      "listHeader": "§bFriends §7(%count%):",
+      "listEntryOnline": "§a● §e%player%",
+      "listEntryOffline": "§c● §e%player%"
+    }
+  },
+  "chat": {
+    "friendPrefix": "§b[F] §r"
+  }
+}

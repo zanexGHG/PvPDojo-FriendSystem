@@ -1,0 +1,10 @@
+name: PvPDojo-FriendSystem
+version: '1.0'
+main: dev.zanex.friendsystem.Main
+authors: [ zanex ]
+
+commands:
+  friend:
+    description: Friend system root command
+    usage: /friend
+    aliases: [friends, f]
