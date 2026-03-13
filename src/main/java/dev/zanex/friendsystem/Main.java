@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Locale;
 
 public final class Main extends JavaPlugin {
     @Getter
@@ -44,13 +45,20 @@ public final class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+
+        commandManager = new FCommandManager(this);
+        commandManager.getLocales().setDefaultLocale(Locale.ENGLISH);
+
         try {
             labelLoader = new LabelsJson(readResourceToString("labels.json"));
         } catch (Exception e) {
             getLogger().severe("Failed to load labels.json from plugin jar: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
+
             return;
         }
+
+        registerACFMessages();
 
         try {
             String jsonString = readResourceToString("mysql.json");
@@ -59,31 +67,34 @@ public final class Main extends JavaPlugin {
             mysql = new MySQLHandler(buildHikariConfig(jsonObject));
             mysql.connect();
 
-            // Ensure tables exist
             execSchema();
 
             getLogger().info("§aSuccessfully initialized MySQL connection pool.");
         } catch (Exception e) {
             getLogger().severe("Failed to initialize MySQL connection: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
+
             return;
         }
 
-        commandManager = new FCommandManager(this);
         friendManager = new FriendsManager();
         friendService = new FriendService();
 
-        // register commands
         new FriendsCommand();
 
-        /* -- onEnable message -- */
         instance.getServer().getLogger().info(labelLoader.of("messages.server.onEnable"));
 
-        /* -- register listener -- */
         registerListener(new JoinQuitListener());
         registerListener(new FriendChatListener());
 
         cleanupStaleRequests();
+    }
+
+    private void registerACFMessages() {
+        String usage = labelLoader.of("commands.friends.usage");
+        commandManager.getLocales().addMessage(Locale.ENGLISH, co.aikar.locales.MessageKey.of("acf-core.invalid_syntax"), usage);
+        commandManager.getLocales().addMessage(Locale.ENGLISH, co.aikar.locales.MessageKey.of("acf-core.error_performing_command"), usage);
+        commandManager.getLocales().addMessage(Locale.ENGLISH, co.aikar.locales.MessageKey.of("acf-core.permission_denied"), labelLoader.of("messages.server.noPermission"));
     }
 
     @Override
@@ -156,7 +167,7 @@ public final class Main extends JavaPlugin {
     public void registerCommand(String command, CommandExecutor executor, TabCompleter... tabCompleter) {
         this.getCommand(command).setExecutor(executor);
 
-        if(tabCompleter != null && tabCompleter.length > 0) {
+        if (tabCompleter != null && tabCompleter.length > 0) {
             this.getCommand(command).setTabCompleter(tabCompleter[0]);
         }
     }
@@ -208,8 +219,8 @@ public final class Main extends JavaPlugin {
 
     private void cleanupStaleRequests() {
         SchedulerHelper.async(() -> {
-            try(Connection connection = mysql.getConnection();
-                Statement st = connection.createStatement()) {
+            try (Connection connection = mysql.getConnection();
+                 Statement st = connection.createStatement()) {
 
                 st.executeUpdate(
                         "DELETE r FROM fs_requests r " +
@@ -219,9 +230,25 @@ public final class Main extends JavaPlugin {
                                 ") " +
                                 "WHERE rel.relation = 0"
                 );
-            } catch(Exception ignored) {
+            } catch (Exception ignored) {
             }
         });
+    }
+
+    private String mapACFKeyToLabel(String acfKey) {
+        if (acfKey == null) return null;
+
+        if (acfKey.equals("acf-core.invalid_syntax")) {
+            return "commands.friends.usage";
+        }
+        if (acfKey.equals("acf-core.error_performing_command")) {
+            return "messages.friend.notFriends";
+        }
+        if (acfKey.equals("acf-core.permission_denied")) {
+            return "messages.server.noPermission";
+        }
+
+        return null;
     }
 
 }

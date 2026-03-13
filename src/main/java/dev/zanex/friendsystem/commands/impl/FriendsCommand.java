@@ -3,6 +3,7 @@ package dev.zanex.friendsystem.commands.impl;
 import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.CommandCompletion;
 import co.aikar.commands.annotation.Default;
+import co.aikar.commands.annotation.Subcommand;
 import dev.zanex.friendsystem.Main;
 import dev.zanex.friendsystem.commands.FCommand;
 import dev.zanex.friendsystem.utils.SchedulerHelper;
@@ -22,147 +23,130 @@ import java.util.UUID;
 public class FriendsCommand extends FCommand {
 
     @Default
+    public void onDefault(Player player) {
+        player.sendMessage(Main.getInstance().getLabelLoader().of("commands.friends.usage"));
+    }
+
+    @Subcommand("add")
     @CommandCompletion("@onlineplayers")
-    public void onCommand(Player player, String[] args) {
-        if(args == null || args.length == 0) {
-            player.sendMessage(Main.getInstance().getLabelLoader().of("commands.friends.usage"));
+    public void onAdd(Player player, String targetName) {
+        OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+        if(target == null || target.getUniqueId() == null) {
+            player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
 
             return;
         }
 
-        String sub = args[0].toLowerCase();
-        if(sub.equals("add") && args.length >= 2) {
-            String targetName = args[1];
-            OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
-            if(target == null || target.getUniqueId() == null) {
-                player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
+        Main.getInstance().getFriendService().sendRequest(player, target.getUniqueId(), targetName);
+    }
 
-                return;
-            }
-
-            Main.getInstance().getFriendService().sendRequest(player, target.getUniqueId(), targetName);
+    @Subcommand("accept")
+    public void onAccept(Player player, String fromName) {
+        OfflinePlayer from = Bukkit.getOfflinePlayer(fromName);
+        if(from == null || from.getUniqueId() == null) {
+            player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
 
             return;
         }
 
-        if(sub.equals("accept") && args.length >= 2) {
-            String fromName = args[1];
-            OfflinePlayer from = Bukkit.getOfflinePlayer(fromName);
-            if(from == null || from.getUniqueId() == null) {
-                player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
+        Main.getInstance().getFriendService().accept(player, from.getUniqueId(), fromName);
+    }
 
-                return;
-            }
-
-            Main.getInstance().getFriendService().accept(player, from.getUniqueId(), fromName);
+    @Subcommand("deny")
+    public void onDeny(Player player, String fromName) {
+        OfflinePlayer from = Bukkit.getOfflinePlayer(fromName);
+        if(from == null || from.getUniqueId() == null) {
+            player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
 
             return;
         }
 
-        if(sub.equals("deny") && args.length >= 2) {
-            String fromName = args[1];
-            OfflinePlayer from = Bukkit.getOfflinePlayer(fromName);
-            if(from == null || from.getUniqueId() == null) {
-                player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
+        Main.getInstance().getFriendService().deny(player, from.getUniqueId(), fromName);
+    }
 
-                return;
-            }
-
-            Main.getInstance().getFriendService().deny(player, from.getUniqueId(), fromName);
-
-            return;
-        }
-
-        if(sub.equals("remove") && args.length >= 2) {
-            String targetName = args[1];
-            OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
-            if(target == null || target.getUniqueId() == null) {
-                player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
-
-                return;
-            }
-
-            Main.getInstance().getFriendManager().removeRelation(player.getUniqueId(), target.getUniqueId());
-
-            player.sendMessage("§a§l! §7Removed §b" + targetName + "§7.");
+    @Subcommand("remove")
+    @CommandCompletion("@onlineplayers")
+    public void onRemove(Player player, String targetName) {
+        OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+        if(target == null || target.getUniqueId() == null) {
+            player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
 
             return;
         }
 
-        if(sub.equals("block") && args.length >= 2) {
-            String targetName = args[1];
-            OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
-            if(target == null || target.getUniqueId() == null) {
-                player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
+        Main.getInstance().getFriendManager().removeRelation(player.getUniqueId(), target.getUniqueId());
 
-                return;
-            }
+        player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.notFriends"));
+    }
 
-            Main.getInstance().getFriendService().block(player, target.getUniqueId(), targetName);
-
-            return;
-        }
-
-        if(sub.equals("unblock") && args.length >= 2) {
-            String targetName = args[1];
-            OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
-            if(target == null || target.getUniqueId() == null) {
-                player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
-
-                return;
-            }
-
-            Main.getInstance().getFriendService().unblock(player, target.getUniqueId(), targetName);
+    @Subcommand("block")
+    @CommandCompletion("@onlineplayers")
+    public void onBlock(Player player, String targetName) {
+        OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+        if(target == null || target.getUniqueId() == null) {
+            player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
 
             return;
         }
 
-        if(sub.equals("list")) {
-            UUID uuid = player.getUniqueId();
-            SchedulerHelper.async(() -> {
-                List<String> friends = new ArrayList<>();
+        Main.getInstance().getFriendService().block(player, target.getUniqueId(), targetName);
+    }
 
-                try(Connection connection = Main.getInstance().getMysql().getConnection();
-                    PreparedStatement ps = connection.prepareStatement(
-                            "SELECT uuid_a, uuid_b FROM fs_relations WHERE (uuid_a = ? OR uuid_b = ?) AND relation = 0"
-                    )) {
+    @Subcommand("unblock")
+    @CommandCompletion("@onlineplayers")
+    public void onUnblock(Player player, String targetName) {
+        OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+        if(target == null || target.getUniqueId() == null) {
+            player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.playerNotFound"));
 
-                    ps.setString(1, uuid.toString());
-                    ps.setString(2, uuid.toString());
+            return;
+        }
 
-                    try(ResultSet rs = ps.executeQuery()) {
-                        while(rs.next()) {
-                            String a = rs.getString("uuid_a");
-                            String b = rs.getString("uuid_b");
-                            String other = a.equalsIgnoreCase(uuid.toString()) ? b : a;
-                            UUID otherUuid = UUID.fromString(other);
-                            String name = Bukkit.getOfflinePlayer(otherUuid).getName();
+        Main.getInstance().getFriendService().unblock(player, target.getUniqueId(), targetName);
+    }
 
-                            friends.add(name == null ? otherUuid.toString() : name);
-                        }
+    @Subcommand("list")
+    public void onList(Player player) {
+        UUID uuid = player.getUniqueId();
+        SchedulerHelper.async(() -> {
+            List<String> friends = new ArrayList<>();
+
+            try(Connection connection = Main.getInstance().getMysql().getConnection();
+                PreparedStatement ps = connection.prepareStatement(
+                        "SELECT uuid_a, uuid_b FROM fs_relations WHERE (uuid_a = ? OR uuid_b = ?) AND relation = 0"
+                )) {
+
+                ps.setString(1, uuid.toString());
+                ps.setString(2, uuid.toString());
+
+                try(ResultSet rs = ps.executeQuery()) {
+                    while(rs.next()) {
+                        String a = rs.getString("uuid_a");
+                        String b = rs.getString("uuid_b");
+                        String other = a.equalsIgnoreCase(uuid.toString()) ? b : a;
+                        UUID otherUuid = UUID.fromString(other);
+                        String name = Bukkit.getOfflinePlayer(otherUuid).getName();
+
+                        friends.add(name == null ? otherUuid.toString() : name);
                     }
-                } catch(SQLException e) {
-                    SchedulerHelper.sync(() -> player.sendMessage("§c§l! §7Database error."));
-
-                    return;
                 }
+            } catch(SQLException e) {
+                SchedulerHelper.sync(() -> player.sendMessage(Main.getInstance().getLabelLoader().of("messages.friend.notFriends")));
 
-                SchedulerHelper.sync(() -> {
-                    player.sendMessage(Main.getInstance().getLabelLoader().of("commands.friends.listHeader")
-                            .replace("%count%", String.valueOf(friends.size())));
+                return;
+            }
 
-                    friends.forEach(name -> {
-                        boolean online = Bukkit.getPlayerExact(name) != null;
-                        String key = online ? "commands.friends.listEntryOnline" : "commands.friends.listEntryOffline";
+            SchedulerHelper.sync(() -> {
+                player.sendMessage(Main.getInstance().getLabelLoader().of("commands.friends.listHeader")
+                        .replace("%count%", String.valueOf(friends.size())));
 
-                        player.sendMessage(Main.getInstance().getLabelLoader().of(key).replace("%player%", name));
-                    });
+                friends.forEach(name -> {
+                    boolean online = Bukkit.getPlayerExact(name) != null;
+                    String key = online ? "commands.friends.listEntryOnline" : "commands.friends.listEntryOffline";
+
+                    player.sendMessage(Main.getInstance().getLabelLoader().of(key).replace("%player%", name));
                 });
             });
-
-            return;
-        }
-
-        player.sendMessage(Main.getInstance().getLabelLoader().of("commands.friends.usage"));
+        });
     }
 }
